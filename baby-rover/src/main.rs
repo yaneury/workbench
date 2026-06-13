@@ -2,6 +2,7 @@
 #![no_main]
 #![feature(abi_avr_interrupt)]
 
+mod board;
 mod controller;
 mod error;
 mod motor;
@@ -17,22 +18,18 @@ use crate::transport::{Command, Transport};
 
 #[arduino_hal::entry]
 fn main() -> ! {
-    let dp = arduino_hal::Peripherals::take().unwrap();
-    let pins = arduino_hal::pins!(dp);
-
-    timer::millis_init(dp.TC0);
+    let mut board = board::Board::new().unwrap();
 
     // Enable interrupts globally
     unsafe { avr_device::interrupt::enable() };
 
-    let mut serial = arduino_hal::default_serial!(dp, pins, 9600);
+    timer::millis_init(board.take_millis_timer().unwrap());
 
-    let (mut rx, mut tx) = serial.split();
+    let mut transport = transport::SerialTransport::new(board.take_serial_rx().unwrap());
+    let mut serial_tx = board.take_serial_tx().unwrap();
 
-    let mut transport = transport::SerialTransport::new(&mut rx);
-
-    let mut led = pins.d13.into_output();
-    let mut delay_multiplier: u8 = 10;
+    let mut led = board.take_led().unwrap();
+    let delay_multiplier: u8 = 10;
 
     let mut last_toggle_time: u32 = 0;
     let blink_interval: u32 = 1000; // 100ms
@@ -43,15 +40,15 @@ fn main() -> ! {
         if current_time - last_toggle_time >= blink_interval {
             led.toggle();
             last_toggle_time = current_time;
-            uwrite!(&mut tx, "Toggling\r\n").unwrap();
+            uwrite!(&mut serial_tx, "Toggling\r\n").unwrap();
         }
 
         if let Ok(Some(command)) = transport.receive() {
             match command {
-                Command::Forward => uwrite!(&mut tx, "Forward\r\n").unwrap(),
-                Command::Reverse => uwrite!(&mut tx, "Reverse\r\n").unwrap(),
-                Command::Left => uwrite!(&mut tx, "Left\r\n").unwrap(),
-                Command::Right => uwrite!(&mut tx, "Right\r\n").unwrap(),
+                Command::Forward => uwrite!(&mut serial_tx, "Forward\r\n").unwrap(),
+                Command::Reverse => uwrite!(&mut serial_tx, "Reverse\r\n").unwrap(),
+                Command::Left => uwrite!(&mut serial_tx, "Left\r\n").unwrap(),
+                Command::Right => uwrite!(&mut serial_tx, "Right\r\n").unwrap(),
             }
         }
     }

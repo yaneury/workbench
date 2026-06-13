@@ -1,6 +1,4 @@
 use crate::error;
-use arduino_hal::hal;
-use arduino_hal::prelude::*;
 use embedded_hal_v0::serial::Read;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -16,17 +14,17 @@ pub trait Transport {
     fn receive(&mut self) -> Result<Option<Command>, error::Error>;
 }
 
-pub struct SerialTransport<'a, S> {
-    serial: &'a mut S,
+pub struct SerialTransport<S> {
+    serial: S,
 }
 
-impl<'a, S> SerialTransport<'a, S> {
-    pub fn new(serial: &'a mut S) -> Self {
+impl<S> SerialTransport<S> {
+    pub fn new(serial: S) -> Self {
         SerialTransport { serial: serial }
     }
 }
 
-impl<'a, S> Transport for SerialTransport<'a, S>
+impl<S> Transport for SerialTransport<S>
 where
     S: Read<u8>,
 {
