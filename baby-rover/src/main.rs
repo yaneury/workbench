@@ -40,7 +40,6 @@ fn main() -> ! {
         if current_time - last_toggle_time >= blink_interval {
             led.toggle();
             last_toggle_time = current_time;
-            uwrite!(&mut serial_tx, "Toggling\r\n").unwrap();
         }
 
         if let Ok(Some(command)) = transport.receive() {
