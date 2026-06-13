@@ -1,6 +1,7 @@
 use crate::error;
 use arduino_hal::hal;
 use arduino_hal::prelude::*;
+use embedded_hal_v0::serial::Read;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Command {
@@ -15,19 +16,20 @@ pub trait Transport {
     fn receive(&mut self) -> Result<Option<Command>, error::Error>;
 }
 
-type ArdunioUnoSerial = hal::usart::Usart0<hal::clock::MHz16>;
-
-pub struct SerialTransport {
-    serial: ArdunioUnoSerial,
+pub struct SerialTransport<'a, S> {
+    serial: &'a mut S,
 }
 
-impl SerialTransport {
-    fn new(serial: ArdunioUnoSerial) -> SerialTransport {
+impl<'a, S> SerialTransport<'a, S> {
+    pub fn new(serial: &'a mut S) -> Self {
         SerialTransport { serial: serial }
     }
 }
 
-impl Transport for SerialTransport {
+impl<'a, S> Transport for SerialTransport<'a, S>
+where
+    S: Read<u8>,
+{
     fn connect(&mut self) -> Result<(), error::Error> {
         Ok(())
     }

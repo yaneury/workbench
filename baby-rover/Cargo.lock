@@ -107,6 +107,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "baby-rover"
+version = "0.1.0"
+dependencies = [
+ "arduino-hal",
+ "avr-device",
+ "embedded-hal 0.2.7",
+ "embedded-hal 1.0.0",
+ "nb 1.1.0",
+ "panic-halt",
+ "ufmt",
+]
+
+[[package]]
 name = "bare-metal"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -120,18 +133,6 @@ checksum = "63044e1ae8e69f3b5a92c736ca6269b8d12fa7efe39bf34ddb06d102cf0e2cab"
 dependencies = [
  "memchr",
  "serde",
-]
-
-[[package]]
-name = "car-rust"
-version = "0.1.0"
-dependencies = [
- "arduino-hal",
- "avr-device",
- "embedded-hal 1.0.0",
- "nb 1.1.0",
- "panic-halt",
- "ufmt",
 ]
 
 [[package]]
