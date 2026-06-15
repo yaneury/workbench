@@ -5,6 +5,7 @@
 mod board;
 mod controller;
 mod error;
+mod log;
 mod motor;
 mod state;
 mod timer;
@@ -25,8 +26,8 @@ fn main() -> ! {
 
     timer::millis_init(board.take_millis_timer().unwrap());
 
+    log::init_logger(board.take_serial_tx().unwrap());
     let mut transport = transport::SerialTransport::new(board.take_serial_rx().unwrap());
-    let mut serial_tx = board.take_serial_tx().unwrap();
 
     let mut led = board.take_led().unwrap();
     let delay_multiplier: u8 = 10;
@@ -44,10 +45,10 @@ fn main() -> ! {
 
         if let Ok(Some(command)) = transport.receive() {
             match command {
-                Command::Forward => uwrite!(&mut serial_tx, "Forward\r\n").unwrap(),
-                Command::Reverse => uwrite!(&mut serial_tx, "Reverse\r\n").unwrap(),
-                Command::Left => uwrite!(&mut serial_tx, "Left\r\n").unwrap(),
-                Command::Right => uwrite!(&mut serial_tx, "Right\r\n").unwrap(),
+                Command::Forward => debugln!("Forward"),
+                Command::Reverse => debugln!("Reverse"),
+                Command::Left => debugln!("Left"),
+                Command::Right => debugln!("Right"),
             }
         }
     }
