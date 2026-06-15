@@ -1,6 +1,5 @@
 use arduino_hal::hal;
-use core::cell::RefCell;
-use ufmt::uwrite;
+use heapless::String;
 
 type SerialTx = hal::usart::UsartWriter<
     hal::pac::USART0,
@@ -20,7 +19,8 @@ pub fn init_logger(serial: SerialTx) {
 pub fn log_impl(msg: &str) {
     unsafe {
         if let Some(ref mut serial) = SERIAL.as_mut() {
-            ufmt::write!(serial, "{}", msg).ok()
+            static mut BUFFER: String<256> = String::new();
+            ufmt::uwrite!(BUFFER, "{}\r\n", msg).ok();
         }
     }
 }
@@ -28,22 +28,6 @@ pub fn log_impl(msg: &str) {
 #[macro_export]
 macro_rules! debug {
     ($($arg:tt)*) => {
-        $crate::log::log(&ufmt::uformat_as_str!($($arg)*));
+        $crate::log::log_impl(&$($arg)*);
     };
 }
-
-#[macro_export]
-macro_rules! debug {
-    ($($arg:tt)*) => {
-        $crate::log::log(&ufmt::uformat_as_str!($($arg)*));
-    };
-}
-
-#[macro_export]
-macro_rules! debugln {
-    ($($arg:tt)*) => {
-        $crate::debug!($($arg)*);
-        $crate::debug!("\r\n");
-    };
-}
-

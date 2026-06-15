@@ -45,10 +45,10 @@ fn main() -> ! {
 
         if let Ok(Some(command)) = transport.receive() {
             match command {
-                Command::Forward => debugln!("Forward"),
-                Command::Reverse => debugln!("Reverse"),
-                Command::Left => debugln!("Left"),
-                Command::Right => debugln!("Right"),
+                Command::Forward => debug!("Forward"),
+                Command::Reverse => debug!("Reverse"),
+                Command::Left => debug!("Left"),
+                Command::Right => debug!("Right"),
             }
         }
     }
