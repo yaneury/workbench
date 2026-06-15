@@ -3,6 +3,7 @@
 #![feature(abi_avr_interrupt)]
 
 mod board;
+mod config;
 mod controller;
 mod error;
 mod log;
@@ -18,7 +19,7 @@ use crate::transport::{Command, Transport};
 
 #[arduino_hal::entry]
 fn main() -> ! {
-    let mut board = board::Board::new().unwrap();
+    let mut board = board::Board::new(config::Config::default()).unwrap();
 
     // Enable interrupts globally
     unsafe { avr_device::interrupt::enable() };

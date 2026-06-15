@@ -1,4 +1,5 @@
 use crate::error;
+use crate::config;
 use arduino_hal::hal;
 
 type UsartRx = hal::usart::UsartReader<
@@ -27,13 +28,13 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn new() -> Result<Self, error::Error> {
+    pub fn new(cfg: config::Config) -> Result<Self, error::Error> {
         let dp = arduino_hal::Peripherals::take().unwrap();
         let pins = arduino_hal::pins!(dp);
 
         let led_pin = pins.d13.into_output();
 
-        let serial = arduino_hal::default_serial!(dp, pins, 9600);
+        let serial = arduino_hal::default_serial!(dp, pins, cfg.baud_rate());
         let (serial_rx, serial_tx) = serial.split();
 
         Ok(Board {
