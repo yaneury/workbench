@@ -1,18 +1,22 @@
-// Program config 
+// Program config
 pub struct Config {
-    serial_baud_rate: u32,
+    baud_rate: u32,
+    blink_interval: u32,
 }
 
 impl Config {
     pub fn default() -> Config {
         Config {
-            serial_baud_rate: 9600,
+            baud_rate: 9600,
+            blink_interval: 1000, // 1 sec
         }
     }
 
     pub fn baud_rate(&self) -> u32 {
-        self.serial_baud_rate
+        self.baud_rate
+    }
+
+    pub fn blink_interval(&self) -> u32 {
+        self.blink_interval
     }
 }
-
-

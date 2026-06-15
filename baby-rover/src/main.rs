@@ -12,47 +12,18 @@ mod state;
 mod timer;
 mod transport;
 
-use arduino_hal::prelude::*;
 use panic_halt as _;
 
-use crate::transport::{Command, Transport};
 
 #[arduino_hal::entry]
 fn main() -> ! {
-    let mut board = board::Board::new(config::Config::default()).unwrap();
-
-    // Enable interrupts globally
+    // First things first, enable interrupts globally.
     unsafe { avr_device::interrupt::enable() };
+    let cfg = &config::Config::default();
+    let board = board::Board::new(&cfg).unwrap();
 
-    timer::millis_init(board.take_millis_timer().unwrap());
+    let mut controller = controller::Controller::new(board);
 
-    log::init_logger(board.take_serial_tx().unwrap());
-    let mut transport = transport::SerialTransport::new(board.take_serial_rx().unwrap());
-
-
-    let mut led = board.take_led().unwrap();
-    let delay_multiplier: u8 = 10;
-
-    let mut last_toggle_time: u32 = 0;
-    let blink_interval: u32 = 1000; // 100ms
-
-    debug!("Initiazed. Entering loop.");
-
-    loop {
-        let current_time = timer::millis();
-
-        if current_time - last_toggle_time >= blink_interval {
-            led.toggle();
-            last_toggle_time = current_time;
-        }
-
-        if let Ok(Some(command)) = transport.receive() {
-            match command {
-                Command::Forward => debug!("Forward"),
-                Command::Reverse => debug!("Reverse"),
-                Command::Left => debug!("Left"),
-                Command::Right => debug!("Right"),
-            }
-        }
-    }
+    controller.setup(cfg);
+    controller.run();
 }

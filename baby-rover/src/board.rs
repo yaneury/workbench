@@ -1,15 +1,15 @@
-use crate::error;
 use crate::config;
+use crate::error;
 use arduino_hal::hal;
 
-type UsartRx = hal::usart::UsartReader<
+pub type UsartRx = hal::usart::UsartReader<
     hal::pac::USART0,                                        // USART peripheral
     hal::port::Pin<hal::port::mode::Input, hal::port::PD0>,  // RX pin
     hal::port::Pin<hal::port::mode::Output, hal::port::PD1>, // TX pin
     hal::clock::MHz16,                                       // CLOCK
 >;
 
-type UsartTx = hal::usart::UsartWriter<
+pub type UsartTx = hal::usart::UsartWriter<
     hal::pac::USART0,
     hal::port::Pin<hal::port::mode::Input, hal::port::PD0>,
     hal::port::Pin<hal::port::mode::Output, hal::port::PD1>,
@@ -18,7 +18,7 @@ type UsartTx = hal::usart::UsartWriter<
 
 // Mappins of Atmega Hal pins to Ardunio Uno can be found at
 // https://rahix.github.io/avr-hal/src/arduino_hal/port/uno.rs.html.
-type LedPin = hal::port::Pin<hal::port::mode::Output, hal::port::PB5>;
+pub type LedPin = hal::port::Pin<hal::port::mode::Output, hal::port::PB5>;
 
 pub struct Board {
     serial_rx: Option<UsartRx>,
@@ -28,7 +28,7 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn new(cfg: config::Config) -> Result<Self, error::Error> {
+    pub fn new(cfg: &config::Config) -> Result<Self, error::Error> {
         let dp = arduino_hal::Peripherals::take().unwrap();
         let pins = arduino_hal::pins!(dp);
 
