@@ -1,5 +1,4 @@
 use arduino_hal::hal;
-use heapless::String;
 
 type SerialTx = hal::usart::UsartWriter<
     hal::pac::USART0,
@@ -19,8 +18,7 @@ pub fn init_logger(serial: SerialTx) {
 pub fn log_impl(msg: &str) {
     unsafe {
         if let Some(ref mut serial) = SERIAL.as_mut() {
-            static mut BUFFER: String<256> = String::new();
-            ufmt::uwrite!(BUFFER, "{}\r\n", msg).ok();
+            ufmt::uwriteln!(serial, "{}", msg).ok();
         }
     }
 }

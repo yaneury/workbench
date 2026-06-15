@@ -28,11 +28,14 @@ fn main() -> ! {
     log::init_logger(board.take_serial_tx().unwrap());
     let mut transport = transport::SerialTransport::new(board.take_serial_rx().unwrap());
 
+
     let mut led = board.take_led().unwrap();
     let delay_multiplier: u8 = 10;
 
     let mut last_toggle_time: u32 = 0;
     let blink_interval: u32 = 1000; // 100ms
+
+    debug!("Initiazed. Entering loop.");
 
     loop {
         let current_time = timer::millis();
