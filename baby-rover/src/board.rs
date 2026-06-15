@@ -1,6 +1,5 @@
 use crate::error;
 use arduino_hal::hal;
-use arduino_hal::prelude::*;
 
 type UsartRx = hal::usart::UsartReader<
     hal::pac::USART0,                                        // USART peripheral
@@ -34,7 +33,7 @@ impl Board {
 
         let led_pin = pins.d13.into_output();
 
-        let mut serial = arduino_hal::default_serial!(dp, pins, 9600);
+        let serial = arduino_hal::default_serial!(dp, pins, 9600);
         let (serial_rx, serial_tx) = serial.split();
 
         Ok(Board {

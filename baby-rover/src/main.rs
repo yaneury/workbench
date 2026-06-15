@@ -13,7 +13,6 @@ mod transport;
 
 use arduino_hal::prelude::*;
 use panic_halt as _;
-use ufmt::uwrite;
 
 use crate::transport::{Command, Transport};
 
