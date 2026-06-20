@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum State {
+pub enum State {
     Forward,
     Reverse,
     Left,
@@ -8,7 +8,7 @@ enum State {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum Event {
+pub enum Event {
     Forward,
     Reverse,
     Left,
@@ -37,6 +37,6 @@ impl StateMachine {
     }
 
     fn current(&self) -> State {
-        return self.state;
+        self.state
     }
 }

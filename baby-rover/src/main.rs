@@ -14,7 +14,6 @@ mod transport;
 
 use panic_halt as _;
 
-
 #[arduino_hal::entry]
 fn main() -> ! {
     // First things first, enable interrupts globally.
@@ -24,6 +23,6 @@ fn main() -> ! {
 
     let mut controller = controller::Controller::new(board);
 
-    controller.setup(cfg);
+    let mut controller = controller.setup(cfg).unwrap();
     controller.run();
 }
