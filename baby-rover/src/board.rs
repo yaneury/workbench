@@ -1,6 +1,8 @@
 use crate::config;
 use crate::error;
 use arduino_hal::hal;
+use arduino_hal::port::mode::Output;
+use arduino_hal::port::{Pin, D4, D5, D6, D7};
 
 pub type UsartRx = hal::usart::UsartReader<
     hal::pac::USART0,                                        // USART peripheral
@@ -25,6 +27,10 @@ pub struct Board {
     serial_tx: Option<UsartTx>,
     led_pin: Option<LedPin>,
     millis_timer: Option<arduino_hal::pac::TC0>,
+    motor_d4: Option<Pin<Output, D4>>,
+    motor_d5: Option<Pin<Output, D5>>,
+    motor_d6: Option<Pin<Output, D6>>,
+    motor_d7: Option<Pin<Output, D7>>,
 }
 
 impl Board {
@@ -42,6 +48,10 @@ impl Board {
             serial_tx: Some(serial_tx),
             led_pin: Some(led_pin),
             millis_timer: Some(dp.TC0),
+            motor_d4: Some(pins.d4.into_output()),
+            motor_d5: Some(pins.d5.into_output()),
+            motor_d6: Some(pins.d6.into_output()),
+            motor_d7: Some(pins.d7.into_output()),
         })
     }
 
@@ -59,5 +69,9 @@ impl Board {
 
     pub fn take_millis_timer(&mut self) -> Option<arduino_hal::pac::TC0> {
         self.millis_timer.take()
+    }
+
+    pub fn take_motor_pins(&mut self) -> Option<(Pin<Output, D4>, Pin<Output, D5>, Pin<Output, D6>, Pin<Output, D7>)> {
+        Some((self.motor_d4.take()?, self.motor_d5.take()?, self.motor_d6.take()?, self.motor_d7.take()?))
     }
 }

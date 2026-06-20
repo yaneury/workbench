@@ -1,6 +1,7 @@
-use crate::state;
+use crate::motor::{Direction, Motor};
+use crate::state::{self, Event, State, StateMachine};
 use crate::transport::{Command, Transport};
-use crate::{board, config, debug, error, log, timer, transport};
+use crate::{board, config, debug, error, log, motor, timer, transport};
 
 pub struct Controller<S> {
     inner: S,
@@ -23,6 +24,7 @@ impl Controller<Uninit> {
 
         let transport = transport::SerialTransport::new(self.inner.board.take_serial_rx().unwrap());
         let led = self.inner.board.take_led().unwrap();
+        let (d4, d5, d6, d7) = self.inner.board.take_motor_pins().unwrap();
 
         debug!("Initiazed. Entering loop.");
 
@@ -31,15 +33,17 @@ impl Controller<Uninit> {
                 led_pin: led,
                 command_transport: transport,
                 blink_interval: cfg.blink_interval(),
-                state: state::State::Idle,
+                state_machine: StateMachine::new(),
                 last_toggle_time: 0,
+                motor: Motor::new(d4, d5, d6, d7),
             },
         })
     }
 }
 
 pub struct Ready {
-    state: state::State,
+    state_machine: state::StateMachine,
+    motor: motor::Motor,
     led_pin: board::LedPin,
     command_transport: transport::SerialTransport<board::UsartRx>,
     blink_interval: u32,
@@ -57,13 +61,27 @@ impl Controller<Ready> {
             }
 
             if let Ok(Some(command)) = self.inner.command_transport.receive() {
-                match command {
-                    Command::Forward => debug!("Forward"),
-                    Command::Reverse => debug!("Reverse"),
-                    Command::Left => debug!("Left"),
-                    Command::Right => debug!("Right"),
-                }
+                let event = match command {
+                    Command::Forward => Event::Forward,
+                    Command::Reverse => Event::Reverse,
+                    Command::Left => Event::Left,
+                    Command::Right => Event::Right,
+                };
+
+                self.inner.state_machine.next(event);
+            } else {
+                debug!("No command received.");
             }
+
+            let direction = match self.inner.state_machine.current() {
+                State::Forward => Direction::Forward,
+                State::Reverse => Direction::Reverse,
+                State::Left => Direction::Left,
+                State::Right => Direction::Right,
+                State::Idle => Direction::Reverse, // TODO
+            };
+
+            let () = self.inner.motor.drive(direction).unwrap();
         }
     }
 }

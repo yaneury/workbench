@@ -17,16 +17,16 @@ pub enum Event {
     Timeout,
 }
 
-struct StateMachine {
+pub struct StateMachine {
     state: State,
 }
 
 impl StateMachine {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self { state: State::Idle }
     }
 
-    fn next(&mut self, event: Event) {
+    pub fn next(&mut self, event: Event) {
         self.state = match event {
             Event::Forward => State::Forward,
             Event::Reverse => State::Reverse,
@@ -36,7 +36,7 @@ impl StateMachine {
         }
     }
 
-    fn current(&self) -> State {
+    pub fn current(&self) -> State {
         self.state
     }
 }
