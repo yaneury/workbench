@@ -73,15 +73,13 @@ impl Controller<Ready> {
                 debug!("No command received.");
             }
 
-            let direction = match self.inner.state_machine.current() {
-                State::Forward => Direction::Forward,
-                State::Reverse => Direction::Reverse,
-                State::Left => Direction::Left,
-                State::Right => Direction::Right,
-                State::Idle => Direction::Reverse, // TODO
+            let () = match self.inner.state_machine.current() {
+                State::Forward => self.inner.motor.drive(Direction::Forward).unwrap(),
+                State::Reverse => self.inner.motor.drive(Direction::Reverse).unwrap(),
+                State::Left => self.inner.motor.drive(Direction::Left).unwrap(),
+                State::Right => self.inner.motor.drive(Direction::Right).unwrap(),
+                State::Idle => self.inner.motor.stop(),
             };
-
-            let () = self.inner.motor.drive(direction).unwrap();
         }
     }
 }
