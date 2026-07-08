@@ -71,7 +71,19 @@ impl Board {
         self.millis_timer.take()
     }
 
-    pub fn take_motor_pins(&mut self) -> Option<(Pin<Output, D4>, Pin<Output, D5>, Pin<Output, D6>, Pin<Output, D7>)> {
-        Some((self.motor_d4.take()?, self.motor_d5.take()?, self.motor_d6.take()?, self.motor_d7.take()?))
+    pub fn take_motor_pins(
+        &mut self,
+    ) -> Option<(
+        Pin<Output, D4>,
+        Pin<Output, D5>,
+        Pin<Output, D6>,
+        Pin<Output, D7>,
+    )> {
+        Some((
+            self.motor_d4.take()?,
+            self.motor_d5.take()?,
+            self.motor_d6.take()?,
+            self.motor_d7.take()?,
+        ))
     }
 }
