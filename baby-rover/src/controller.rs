@@ -70,7 +70,7 @@ impl Controller<Ready> {
 
                 self.inner.state_machine.next(event);
             } else {
-                debug!("No command received.");
+                self.inner.state_machine.next(Event::Stop)
             }
 
             let () = match self.inner.state_machine.current() {
