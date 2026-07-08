@@ -21,11 +21,13 @@ pub struct StateMachine {
     state: State,
 }
 
-impl StateMachine {
-    pub fn new() -> Self {
-        Self { state: State::Idle }
+impl Default for StateMachine {
+    fn default() -> StateMachine {
+        StateMachine { state: State::Idle }
     }
+}
 
+impl StateMachine {
     pub fn next(&mut self, event: Event) {
         self.state = match event {
             Event::Forward => State::Forward,

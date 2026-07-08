@@ -33,7 +33,7 @@ impl Controller<Uninit> {
                 led_pin: led,
                 command_transport: transport,
                 blink_interval: cfg.blink_interval(),
-                state_machine: StateMachine::new(),
+                state_machine: StateMachine::default(),
                 last_toggle_time: 0,
                 motor: Motor::new(d4, d5, d6, d7),
             },
