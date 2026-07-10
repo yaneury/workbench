@@ -1,25 +1,33 @@
 use std::cmp::{Ordering, Reverse};
 use std::collections::BinaryHeap;
 use std::sync::atomic::AtomicU64;
-use std::sync::mpsc;
+use std::sync::mpsc::{self, Sender};
 use std::sync::{Arc, Mutex};
-use std::thread::{JoinHandle, sleep, spawn};
+use std::thread::{JoinHandle, spawn};
 use std::time::{Duration, Instant};
 
 pub struct TaskScheduler {
     tasks: Arc<Mutex<BinaryHeap<Reverse<Task>>>>,
     looper: JoinHandle<()>,
     next_id: AtomicU64,
+    wakeup_tx: Sender<()>,
 }
 
 impl TaskScheduler {
     pub fn new() -> TaskScheduler {
         let tasks = Arc::new(Mutex::new(BinaryHeap::<Reverse<Task>>::new()));
         let tasks_clone = tasks.clone();
-        let (tx, rw) = mpsc::channel::<()>();
+        let (wakeup_tx, wakeup_rx) = mpsc::channel::<()>();
 
         let looper = spawn(move || {
-            let mut tasks = tasks_clone;
+            let tasks = tasks_clone;
+
+            let sleep = move |duration: Duration| {
+                match wakeup_rx.recv_timeout(duration) {
+                    Ok(()) => {}
+                    _ => {} // Timedout
+                };
+            };
 
             loop {
                 let now = Instant::now();
@@ -55,6 +63,7 @@ impl TaskScheduler {
             tasks,
             looper,
             next_id: AtomicU64::new(0),
+            wakeup_tx,
         }
     }
 
@@ -68,6 +77,7 @@ impl TaskScheduler {
             cadence,
             due_at: Instant::now() + cadence,
         }));
+        self.wakeup_tx.send(());
     }
 }
 
