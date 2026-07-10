@@ -61,7 +61,7 @@ blocked, the runtime powering this API is as such:
   looping and scheduling tasks.
 - Threads reserved are 1) API thread to handle calls to |schedule| and |deschedule| and 2) loop
   thread to pop next set of tasks and hand them off to thread, per tick.
-
+ 
 ### API Thread
 The API thread, or "main thread" of the runtime, is primarily in charge of fulfilling caller
 requests and informing the loop thread of when to wake up.
