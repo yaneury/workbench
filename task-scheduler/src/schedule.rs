@@ -77,7 +77,7 @@ impl TaskScheduler {
             cadence,
             due_at: Instant::now() + cadence,
         }));
-        self.wakeup_tx.send(());
+        let _ = self.wakeup_tx.send(());
     }
 }
 
