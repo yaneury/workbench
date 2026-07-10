@@ -71,19 +71,39 @@ impl TaskScheduler {
         let runnable = Arc::new(f);
         assert!(!cadence.is_zero());
 
+        let id = self
+            .next_id
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+
         let mut tasks = self.tasks.lock().unwrap();
         tasks.push(Reverse(Task {
+            handle: Handle { id },
             runnable,
             cadence,
             due_at: Instant::now() + cadence,
         }));
         let _ = self.wakeup_tx.send(());
     }
+
+    pub fn deschedule(&mut self, handle: Handle) -> bool {
+        let mut tasks = self.tasks.lock().unwrap();
+
+        let pre_filter_len = tasks.len();
+        tasks.retain(|Reverse(task)| task.handle.id != handle.id);
+        let post_filter_len = tasks.len();
+
+        return pre_filter_len > post_filter_len;
+    }
 }
 
 type Runnable = Arc<dyn Fn() + Send + Sync>;
 
+pub struct Handle {
+    id: u64,
+}
+
 struct Task {
+    handle: Handle,
     runnable: Runnable,
     cadence: Duration,
     due_at: Instant,
