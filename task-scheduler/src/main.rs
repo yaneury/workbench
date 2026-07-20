@@ -27,3 +27,6 @@ fn main() {
 
     std::thread::sleep(Duration::from_secs(10));
 }
+
+#[cfg(test)]
+mod tests {}

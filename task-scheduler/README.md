@@ -85,3 +85,34 @@ The library will have its own thread pool implementation. Unlike most thread poo
 stealing policies in order to accomodate unbounded number of tasks, this one rejects tasks outright
 if the number of request tasks is greater than the number of threads reserved for the pool. This
 is the only way we can guarantee that requests are fulfilled within the promised SLA.
+
+### Context
+
+The runtime will communicate with callers via a signal surface that is exercised in their callbacks.
+Each time a task is run, a context object will be provided. This contains optional metadata that
+callables can use if they need:
+
+- Current time: The time this task was scheduled.
+- Counter: For repeating jobs, the number of times this job has run. First run will show #1.
+
+Furthermore, the context object will be mutable such that a task can pass arbitrary values to
+registered listeners (see next sub-section). These values will be keyed by strings. The underlying
+key-value store is unique to each task such that different tasks can use same keys with no conflicts.
+
+### Listener
+
+Scheduler allows listeners to observe the status of scheduled tasks. When you schedule a task, a
+Handle object is minted that uniquely identifies the task to the underlying runtime. This same
+handle is used to registered / deregister a listener.
+
+
+## Testing
+The library ought to be tested against multiple fronts to ensure robustness:
+
+1) **Correction**. First and foremost, the runtime must schedule jobs at the time determined by caller
+   every time. No exception.
+2) **Capacity**. The runtime should handle a large number of concurrent tasks running at any point and
+   even larger number of tasks scheduled.
+3) **Unpredictability**. The runtime should be amenable to unbounded, unpredictable usages.
+4) **Compatibility**. The runtime should be operating system agnostic. That is to say, the tests
+   should yield the same result regardless what platform it's running on.
