@@ -141,8 +141,8 @@ fn decode_dabble_message(bytes: &[u8; 8]) -> Result<Option<Command>, error::Erro
     Ok(Some(match bytes[6] {
         0x01 => Command::Forward,
         0x02 => Command::Reverse,
-        0x03 => Command::Left,
-        0x04 => Command::Right,
+        0x04 => Command::Left,
+        0x08 => Command::Right,
         _ => {
             return Err(error::Error::Parsing);
         }
