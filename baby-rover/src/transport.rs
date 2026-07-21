@@ -85,8 +85,19 @@ where
             }
         }
 
-        if read == 8 {
-            return decode_dabble_message(&buf);
+        if read != 8 {
+            return Ok(None);
+        }
+
+        if let Ok(Some(command)) = decode_dabble_message(&buf) {
+            // Dabble app sends a "Release" command immediately after sending a direction
+            // command. We ignore that here explicitly so it doesn't interferece with driver
+            // logic.
+            for _ in 0..8 {
+                let _ = self.serial.read();
+            }
+
+            return Ok(Some(command));
         }
 
         Ok(None)
