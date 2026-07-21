@@ -1,2 +1,4 @@
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Error {}
+pub enum Error {
+    Parsing,
+}
