@@ -22,7 +22,8 @@ impl Controller<Uninit> {
         timer::millis_init(self.inner.board.take_millis_timer().unwrap());
         log::init_logger(self.inner.board.take_serial_tx().unwrap());
 
-        let transport = transport::SerialTransport::new(self.inner.board.take_serial_rx().unwrap());
+        let transport =
+            transport::DabbleBTTransport::new(self.inner.board.take_serial_rx().unwrap());
         let led = self.inner.board.take_led().unwrap();
         let (d4, d5, d6, d7) = self.inner.board.take_motor_pins().unwrap();
 
@@ -45,7 +46,7 @@ pub struct Ready {
     state_machine: state::StateMachine,
     motor: motor::Motor,
     led_pin: board::LedPin,
-    command_transport: transport::SerialTransport<board::UsartRx>,
+    command_transport: transport::DabbleBTTransport<board::UsartRx>,
     blink_interval: u32,
     last_toggle_time: u32,
 }
@@ -61,6 +62,7 @@ impl Controller<Ready> {
             }
 
             if let Ok(Some(command)) = self.inner.command_transport.receive() {
+                debug!("Received command!");
                 let event = match command {
                     Command::Forward => Event::Forward,
                     Command::Reverse => Event::Reverse,
@@ -70,7 +72,8 @@ impl Controller<Ready> {
 
                 self.inner.state_machine.next(event);
             } else {
-                self.inner.state_machine.next(Event::Stop)
+                // debug!("Did not receive command. Stopping.");
+                // self.inner.state_machine.next(Event::Stop)
             }
 
             let () = match self.inner.state_machine.current() {

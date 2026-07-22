@@ -1,3 +1,4 @@
+use crate::debug;
 use crate::error;
 use embedded_hal_v0::serial::Read;
 
@@ -69,27 +70,36 @@ where
     }
 
     fn receive(&mut self) -> Result<Option<Command>, error::Error> {
+        // debug!("Receive called");
         let mut buf = [0u8; 8];
         let mut read = 0;
 
         // Header byte must be 0xff, otherwise we ignore.
         if let Ok(0xff) = self.serial.read() {
+            debug!("Header read");
             buf[0] = 0xff;
             read += 1;
 
             for i in 1..=7 {
-                if let Ok(byte) = self.serial.read() {
-                    buf[i] = byte;
-                    read += 1;
+                loop {
+                    if let Ok(byte) = self.serial.read() {
+                        buf[i] = byte;
+                        read += 1;
+                        break;
+                    }
                 }
             }
         }
 
+        // debug!("Serial read. Do not know if header.");
+
         if read != 8 {
+            // debug!("Did not read 8 bytes!");
             return Ok(None);
         }
 
         if let Ok(Some(command)) = decode_dabble_message(&buf) {
+            debug!("Read 8 bytes!");
             // Dabble app sends a "Release" command immediately after sending a direction
             // command. We ignore that here explicitly so it doesn't interferece with driver
             // logic.
@@ -149,6 +159,8 @@ Direction (Index 6)
 */
 
 fn decode_dabble_message(bytes: &[u8; 8]) -> Result<Option<Command>, error::Error> {
+    debug!("Decoding dabble message!");
+
     Ok(Some(match bytes[6] {
         0x01 => Command::Forward,
         0x02 => Command::Reverse,
