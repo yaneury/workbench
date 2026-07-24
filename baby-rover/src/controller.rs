@@ -62,27 +62,27 @@ impl Controller<Ready> {
             }
 
             if let Ok(Some(command)) = self.inner.command_transport.receive() {
-                debug!("Received command!");
+                // debug!("Received command!");
                 let event = match command {
                     Command::Forward => Event::Forward,
                     Command::Reverse => Event::Reverse,
                     Command::Left => Event::Left,
                     Command::Right => Event::Right,
+                    Command::Stop => Event::Stop,
                 };
 
                 self.inner.state_machine.next(event);
+                let () = match self.inner.state_machine.current() {
+                    State::Forward => self.inner.motor.drive(Direction::Forward).unwrap(),
+                    State::Reverse => self.inner.motor.drive(Direction::Reverse).unwrap(),
+                    State::Left => self.inner.motor.drive(Direction::Left).unwrap(),
+                    State::Right => self.inner.motor.drive(Direction::Right).unwrap(),
+                    State::Idle => self.inner.motor.stop(),
+                };
             } else {
                 // debug!("Did not receive command. Stopping.");
                 // self.inner.state_machine.next(Event::Stop)
             }
-
-            let () = match self.inner.state_machine.current() {
-                State::Forward => self.inner.motor.drive(Direction::Forward).unwrap(),
-                State::Reverse => self.inner.motor.drive(Direction::Reverse).unwrap(),
-                State::Left => self.inner.motor.drive(Direction::Left).unwrap(),
-                State::Right => self.inner.motor.drive(Direction::Right).unwrap(),
-                State::Idle => self.inner.motor.stop(),
-            };
         }
     }
 }

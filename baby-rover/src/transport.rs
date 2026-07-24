@@ -8,6 +8,7 @@ pub enum Command {
     Reverse,
     Left,
     Right,
+    Stop,
 }
 
 pub trait Transport {
@@ -76,7 +77,7 @@ where
 
         // Header byte must be 0xff, otherwise we ignore.
         if let Ok(0xff) = self.serial.read() {
-            debug!("Header read");
+            // debug!("Header read");
             buf[0] = 0xff;
             read += 1;
 
@@ -99,13 +100,17 @@ where
         }
 
         if let Ok(Some(command)) = decode_dabble_message(&buf) {
-            debug!("Read 8 bytes!");
+            // debug!("Read 8 bytes!");
             // Dabble app sends a "Release" command immediately after sending a direction
             // command. We ignore that here explicitly so it doesn't interferece with driver
             // logic.
-            for _ in 0..8 {
-                let _ = self.serial.read();
-            }
+            // for _ in 0..8 {
+            //     loop {
+            //         if let Ok(_byte) = self.serial.read() {
+            //             break;
+            //         }
+            //     }
+            // }
 
             return Ok(Some(command));
         }
@@ -159,7 +164,12 @@ Direction (Index 6)
 */
 
 fn decode_dabble_message(bytes: &[u8; 8]) -> Result<Option<Command>, error::Error> {
-    debug!("Decoding dabble message!");
+    // debug!("Decoding dabble message!");
+    crate::log::log_bytes(bytes);
+
+    if bytes[5] != 0 {
+        return Ok(Some(Command::Stop));
+    }
 
     Ok(Some(match bytes[6] {
         0x01 => Command::Forward,
