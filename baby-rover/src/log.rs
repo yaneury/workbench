@@ -17,7 +17,7 @@ pub fn init_logger(serial: SerialTx) {
 
 pub fn log_impl(msg: &str) {
     unsafe {
-        if let Some(ref mut serial) = SERIAL.as_mut() {
+        if let Some(ref mut serial) = *(&raw mut SERIAL) {
             ufmt::uwriteln!(serial, "{}", msg).ok();
         }
     }
@@ -25,7 +25,7 @@ pub fn log_impl(msg: &str) {
 
 pub fn log_bytes(bytes: &[u8]) {
     unsafe {
-        if let Some(ref mut serial) = SERIAL.as_mut() {
+        if let Some(ref mut serial) = *(&raw mut SERIAL) {
             for byte in bytes {
                 ufmt::uwrite!(serial, "{} ", byte).ok();
             }

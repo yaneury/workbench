@@ -1,4 +1,3 @@
-use crate::debug;
 use crate::error;
 use embedded_hal_v0::serial::Read;
 
@@ -12,7 +11,6 @@ pub enum Command {
 }
 
 pub trait Transport {
-    fn connect(&mut self) -> Result<(), error::Error>;
     fn receive(&mut self) -> Result<Option<Command>, error::Error>;
 }
 
@@ -20,6 +18,7 @@ pub struct SerialTransport<S> {
     serial: S,
 }
 
+#[allow(dead_code)]
 impl<S> SerialTransport<S> {
     pub fn new(serial: S) -> Self {
         SerialTransport { serial: serial }
@@ -30,10 +29,6 @@ impl<S> Transport for SerialTransport<S>
 where
     S: Read<u8>,
 {
-    fn connect(&mut self) -> Result<(), error::Error> {
-        Ok(())
-    }
-
     fn receive(&mut self) -> Result<Option<Command>, error::Error> {
         if let Ok(byte) = self.serial.read() {
             return match byte {
@@ -66,10 +61,6 @@ impl<S> Transport for DabbleBTTransport<S>
 where
     S: Read<u8>,
 {
-    fn connect(&mut self) -> Result<(), error::Error> {
-        Ok(())
-    }
-
     fn receive(&mut self) -> Result<Option<Command>, error::Error> {
         // debug!("Receive called");
         let mut buf = [0u8; 8];

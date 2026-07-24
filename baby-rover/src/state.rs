@@ -14,7 +14,6 @@ pub enum Event {
     Left,
     Right,
     Stop,
-    Timeout,
 }
 
 pub struct StateMachine {
@@ -34,7 +33,7 @@ impl StateMachine {
             Event::Reverse => State::Reverse,
             Event::Left => State::Left,
             Event::Right => State::Right,
-            Event::Stop | Event::Timeout => State::Idle,
+            Event::Stop => State::Idle,
         }
     }
 
