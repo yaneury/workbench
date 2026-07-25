@@ -10,22 +10,22 @@ pub enum Command {
     Stop,
 }
 
-pub trait Transport {
+pub trait Receiver {
     fn receive(&mut self) -> Result<Option<Command>, error::Error>;
 }
 
-pub struct SerialTransport<S> {
+pub struct SerialReceiver<S> {
     serial: S,
 }
 
 #[allow(dead_code)]
-impl<S> SerialTransport<S> {
+impl<S> SerialReceiver<S> {
     pub fn new(serial: S) -> Self {
-        SerialTransport { serial: serial }
+        SerialReceiver { serial: serial }
     }
 }
 
-impl<S> Transport for SerialTransport<S>
+impl<S> Receiver for SerialReceiver<S>
 where
     S: Read<u8>,
 {
@@ -37,8 +37,7 @@ where
                 b'H' | b'h' => Ok(Some(Command::Left)),
                 b'L' | b'l' => Ok(Some(Command::Right)),
                 b'\n' | b'\r' => Ok(None),
-                // Ignore newlines/carriage returns
-                _ => Ok(None), // TODO: Handle, I guess.
+                _ => Ok(None),
             };
         }
 
@@ -47,28 +46,26 @@ where
 }
 
 // Object able to parse basic BT commands coming from Dabble iOS app.
-pub struct DabbleBTTransport<S> {
+pub struct DabbleReceiver<S> {
     serial: S,
 }
 
-impl<S> DabbleBTTransport<S> {
+impl<S> DabbleReceiver<S> {
     pub fn new(serial: S) -> Self {
-        DabbleBTTransport { serial: serial }
+        DabbleReceiver { serial: serial }
     }
 }
 
-impl<S> Transport for DabbleBTTransport<S>
+impl<S> Receiver for DabbleReceiver<S>
 where
     S: Read<u8>,
 {
     fn receive(&mut self) -> Result<Option<Command>, error::Error> {
-        // debug!("Receive called");
         let mut buf = [0u8; 8];
         let mut read = 0;
 
         // Header byte must be 0xff, otherwise we ignore.
         if let Ok(0xff) = self.serial.read() {
-            // debug!("Header read");
             buf[0] = 0xff;
             read += 1;
 
@@ -83,26 +80,11 @@ where
             }
         }
 
-        // debug!("Serial read. Do not know if header.");
-
         if read != 8 {
-            // debug!("Did not read 8 bytes!");
             return Ok(None);
         }
 
         if let Ok(Some(command)) = decode_dabble_message(&buf) {
-            // debug!("Read 8 bytes!");
-            // Dabble app sends a "Release" command immediately after sending a direction
-            // command. We ignore that here explicitly so it doesn't interferece with driver
-            // logic.
-            // for _ in 0..8 {
-            //     loop {
-            //         if let Ok(_byte) = self.serial.read() {
-            //             break;
-            //         }
-            //     }
-            // }
-
             return Ok(Some(command));
         }
 
@@ -152,12 +134,27 @@ Direction (Index 6)
 │ Release   │ 0x00       │
 └───────────┴────────────┘
 
+Button (Index 5) — all map to Stop
+
+┌──────────┬────────────┐
+│  Button  │ Byte value │
+├──────────┼────────────┤
+│ Start    │ 0x01       │
+├──────────┼────────────┤
+│ Select   │ 0x02       │
+├──────────┼────────────┤
+│ Triangle │ 0x04       │
+├──────────┼────────────┤
+│ Circle   │ 0x08       │
+├──────────┼────────────┤
+│ X        │ 0x10       │
+├──────────┼────────────┤
+│ Square   │ 0x20       │
+└──────────┴────────────┘
+
 */
 
 fn decode_dabble_message(bytes: &[u8; 8]) -> Result<Option<Command>, error::Error> {
-    // debug!("Decoding dabble message!");
-    crate::log::log_bytes(bytes);
-
     if bytes[5] != 0 {
         return Ok(Some(Command::Stop));
     }

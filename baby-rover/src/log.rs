@@ -23,16 +23,6 @@ pub fn log_impl(msg: &str) {
     }
 }
 
-pub fn log_bytes(bytes: &[u8]) {
-    unsafe {
-        if let Some(ref mut serial) = *(&raw mut SERIAL) {
-            for byte in bytes {
-                ufmt::uwrite!(serial, "{} ", byte).ok();
-            }
-            ufmt::uwriteln!(serial, "").ok();
-        }
-    }
-}
 
 #[macro_export]
 macro_rules! debug {

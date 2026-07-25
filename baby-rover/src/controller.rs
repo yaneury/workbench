@@ -1,7 +1,7 @@
 use crate::motor::{Direction, Motor};
+use crate::receiver::{Command, DabbleReceiver, Receiver};
 use crate::state::{self, Event, State, StateMachine};
-use crate::transport::{Command, Transport};
-use crate::{board, config, debug, error, log, motor, timer, transport};
+use crate::{board, config, debug, error, log, motor, timer};
 
 pub struct Controller<S> {
     inner: S,
@@ -22,8 +22,7 @@ impl Controller<Uninit> {
         timer::millis_init(self.inner.board.take_millis_timer().unwrap());
         log::init_logger(self.inner.board.take_serial_tx().unwrap());
 
-        let transport =
-            transport::DabbleBTTransport::new(self.inner.board.take_serial_rx().unwrap());
+        let receiver = DabbleReceiver::new(self.inner.board.take_serial_rx().unwrap());
         let led = self.inner.board.take_led().unwrap();
         let (d4, d5, d6, d7) = self.inner.board.take_motor_pins().unwrap();
 
@@ -32,7 +31,7 @@ impl Controller<Uninit> {
         Ok(Controller {
             inner: Ready {
                 led_pin: led,
-                command_transport: transport,
+                receiver,
                 blink_interval: cfg.blink_interval(),
                 state_machine: StateMachine::default(),
                 last_toggle_time: 0,
@@ -46,7 +45,7 @@ pub struct Ready {
     state_machine: state::StateMachine,
     motor: motor::Motor,
     led_pin: board::LedPin,
-    command_transport: transport::DabbleBTTransport<board::UsartRx>,
+    receiver: DabbleReceiver<board::UsartRx>,
     blink_interval: u32,
     last_toggle_time: u32,
 }
@@ -61,7 +60,7 @@ impl Controller<Ready> {
                 self.inner.last_toggle_time = current_time;
             }
 
-            if let Ok(Some(command)) = self.inner.command_transport.receive() {
+            if let Ok(Some(command)) = self.inner.receiver.receive() {
                 // debug!("Received command!");
                 let event = match command {
                     Command::Forward => Event::Forward,

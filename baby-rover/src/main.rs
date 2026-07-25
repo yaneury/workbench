@@ -10,7 +10,7 @@ mod log;
 mod motor;
 mod state;
 mod timer;
-mod transport;
+mod receiver;
 
 use panic_halt as _;
 
