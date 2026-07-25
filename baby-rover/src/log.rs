@@ -15,6 +15,7 @@ pub fn init_logger(serial: SerialTx) {
     }
 }
 
+#[cfg(debug_assertions)]
 pub fn log_impl(msg: &str) {
     unsafe {
         if let Some(ref mut serial) = *(&raw mut SERIAL) {
@@ -23,6 +24,8 @@ pub fn log_impl(msg: &str) {
     }
 }
 
+#[cfg(not(debug_assertions))]
+pub fn log_impl(_: &str) {}
 
 #[macro_export]
 macro_rules! debug {
