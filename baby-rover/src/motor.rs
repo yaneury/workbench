@@ -10,10 +10,10 @@ pub enum Direction {
 }
 
 pub struct Motor {
-    left_forward: Pin<Output, D4>,  // IN1
-    left_reverse: Pin<Output, D5>,  // IN2
-    right_forward: Pin<Output, D6>, // IN3
-    right_reverse: Pin<Output, D7>, // IN4
+    left_forward: Pin<Output, D7>,  // IN1
+    left_reverse: Pin<Output, D6>,  // IN2
+    right_forward: Pin<Output, D5>, // IN3
+    right_reverse: Pin<Output, D4>, // IN4
 }
 
 impl Motor {
@@ -24,10 +24,10 @@ impl Motor {
         d7: Pin<Output, D7>,
     ) -> Motor {
         Motor {
-            left_forward: d4,
-            left_reverse: d5,
-            right_forward: d6,
-            right_reverse: d7,
+            left_forward: d7,
+            left_reverse: d6,
+            right_forward: d5,
+            right_reverse: d4,
         }
     }
 
