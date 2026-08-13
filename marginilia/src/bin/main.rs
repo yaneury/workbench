@@ -7,12 +7,19 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
+use embedded_hal_bus::spi::ExclusiveDevice;
+use epd_waveshare::{epd7in5_v2::Epd7in5, prelude::*};
 use esp_hal::{
     clock::CpuClock,
+    delay::Delay,
+    gpio::{Input, InputConfig, Level, Output, OutputConfig, Pull},
     main,
-    time::{Duration, Instant},
+    spi::{
+        master::{Config, Spi},
+        Mode,
+    },
+    time::Rate,
 };
-
 use esp_println::println;
 
 #[panic_handler]
@@ -20,8 +27,6 @@ fn panic(_: &core::panic::PanicInfo) -> ! {
     loop {}
 }
 
-// This creates a default app-descriptor required by the esp-idf bootloader.
-// For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
 esp_bootloader_esp_idf::esp_app_desc!();
 
 #[allow(
@@ -30,19 +35,38 @@ esp_bootloader_esp_idf::esp_app_desc!();
 )]
 #[main]
 fn main() -> ! {
-    // generator version: 1.3.0
-    // generator parameters: --chip esp32
-
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
-    let _peripherals = esp_hal::init(config);
+    let peripherals = esp_hal::init(config);
 
-    println!("Hello World!");
+    println!("Marginilia: clearing display...");
 
-    loop {
-        let delay_start = Instant::now();
-        while delay_start.elapsed() < Duration::from_millis(500) {}
-        println!("Looping.");
-    }
+    let mut delay = Delay::new();
 
-    // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v1.1.0/examples
+    let dc   = Output::new(peripherals.GPIO27, Level::Low,  OutputConfig::default());
+    let rst  = Output::new(peripherals.GPIO26, Level::Low,  OutputConfig::default());
+    let cs   = Output::new(peripherals.GPIO15, Level::High, OutputConfig::default());
+    let busy = Input::new(peripherals.GPIO25,  InputConfig::default().with_pull(Pull::None));
+
+    let spi = Spi::new(
+        peripherals.SPI2,
+        Config::default()
+            .with_frequency(Rate::from_mhz(4))
+            .with_mode(Mode::_0),
+    )
+    .unwrap()
+    .with_sck(peripherals.GPIO13)
+    .with_mosi(peripherals.GPIO14);
+
+    let mut spi_dev = ExclusiveDevice::new(spi, cs, Delay::new()).unwrap();
+
+    let mut epd = Epd7in5::new(&mut spi_dev, busy, dc, rst, &mut delay, None).unwrap();
+
+    epd.clear_frame(&mut spi_dev, &mut delay).unwrap();
+    epd.display_frame(&mut spi_dev, &mut delay).unwrap();
+
+    println!("Marginilia: display cleared.");
+
+    epd.sleep(&mut spi_dev, &mut delay).unwrap();
+
+    loop {}
 }
