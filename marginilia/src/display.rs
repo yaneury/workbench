@@ -169,6 +169,9 @@ where
 
     fn flush(&mut self) -> Result<(), Error<SPI::Error>> {
         self.epd
+            .wake_up(&mut self.spi, &mut self.delay)
+            .map_err(Error::Spi)?;
+        self.epd
             .update_frame(&mut self.spi, self.buffer.buffer(), &mut self.delay)
             .map_err(Error::Spi)?;
         self.epd
