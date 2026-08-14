@@ -3,8 +3,8 @@ use core::fmt::Write;
 use embedded_graphics::{
     geometry::Size,
     mono_font::{
-        ascii::{FONT_10X20, FONT_9X18_BOLD},
         MonoTextStyle,
+        ascii::{FONT_8X13_ITALIC, FONT_9X18_BOLD, FONT_10X20},
     },
     prelude::*,
     primitives::Rectangle,
@@ -15,9 +15,9 @@ use embedded_hal::{
     spi::SpiDevice,
 };
 use embedded_text::{
+    TextBox,
     alignment::{HorizontalAlignment, VerticalAlignment},
     style::TextBoxStyleBuilder,
-    TextBox,
 };
 use epd_waveshare::{
     color::Color,
@@ -31,8 +31,10 @@ use crate::model::Quote;
 const MARGIN: i32 = 40;
 const CONTENT_WIDTH: u32 = 720;
 const BODY_HEIGHT: u32 = 340;
-const LABEL_HEIGHT: u32 = 30;
-const ATTRIBUTION_Y: i32 = 405;
+const AUTHOR_Y: i32 = 390;
+const AUTHOR_HEIGHT: u32 = 22;
+const WORK_Y: i32 = 416;
+const WORK_HEIGHT: u32 = 16;
 const FULL_HEIGHT: u32 = 400;
 
 pub struct Display<SPI, BUSY, DC, RST, DELAY> {
@@ -77,26 +79,32 @@ where
 
         TextBox::with_textbox_style(
             quote.body,
-            Rectangle::new(Point::new(MARGIN, MARGIN), Size::new(CONTENT_WIDTH, BODY_HEIGHT)),
+            Rectangle::new(
+                Point::new(MARGIN, MARGIN),
+                Size::new(CONTENT_WIDTH, BODY_HEIGHT),
+            ),
             text_style,
             centered,
         )
         .draw(&mut self.buffer)?;
 
-        let label_style = MonoTextStyle::new(&FONT_9X18_BOLD, Color::Black);
         let right_aligned = TextBoxStyleBuilder::new()
             .alignment(HorizontalAlignment::Right)
             .vertical_alignment(VerticalAlignment::Middle)
             .build();
 
-        // e.g. "— Marcus Aurelius in Meditations"
-        let mut attribution = heapless::String::<256>::new();
-        write!(attribution, "\u{2014} {} in {}", quote.author, quote.work).ok();
+        TextBox::with_textbox_style(
+            quote.author,
+            Rectangle::new(Point::new(MARGIN, AUTHOR_Y), Size::new(CONTENT_WIDTH, AUTHOR_HEIGHT)),
+            MonoTextStyle::new(&FONT_9X18_BOLD, Color::Black),
+            right_aligned,
+        )
+        .draw(&mut self.buffer)?;
 
         TextBox::with_textbox_style(
-            &attribution,
-            Rectangle::new(Point::new(MARGIN, ATTRIBUTION_Y), Size::new(CONTENT_WIDTH, LABEL_HEIGHT)),
-            label_style,
+            quote.work,
+            Rectangle::new(Point::new(MARGIN, WORK_Y), Size::new(CONTENT_WIDTH, WORK_HEIGHT)),
+            MonoTextStyle::new(&FONT_8X13_ITALIC, Color::Black),
             right_aligned,
         )
         .draw(&mut self.buffer)?;
@@ -115,7 +123,10 @@ where
 
         TextBox::with_textbox_style(
             "Updating quote bank...",
-            Rectangle::new(Point::new(MARGIN, MARGIN), Size::new(CONTENT_WIDTH, FULL_HEIGHT)),
+            Rectangle::new(
+                Point::new(MARGIN, MARGIN),
+                Size::new(CONTENT_WIDTH, FULL_HEIGHT),
+            ),
             style,
             centered,
         )
@@ -141,7 +152,10 @@ where
 
         TextBox::with_textbox_style(
             &message,
-            Rectangle::new(Point::new(MARGIN, MARGIN), Size::new(CONTENT_WIDTH, FULL_HEIGHT)),
+            Rectangle::new(
+                Point::new(MARGIN, MARGIN),
+                Size::new(CONTENT_WIDTH, FULL_HEIGHT),
+            ),
             style,
             centered,
         )
