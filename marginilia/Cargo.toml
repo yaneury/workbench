@@ -21,6 +21,9 @@ embedded-hal = "1.0"
 critical-section = "1.2.0"
 epd-waveshare = { version = "0.6.0", features = ["graphics"] }
 embedded-hal-bus = "0.3.0"
+embedded-graphics = "0.8"
+embedded-text = "0.7"
+heapless = "0.8"
 
 
 # For fine tuning these settings, please refer to https://doc.rust-lang.org/cargo/reference/profiles.html

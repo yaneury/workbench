@@ -1,0 +1,164 @@
+use core::fmt::Write;
+
+use embedded_graphics::{
+    geometry::Size,
+    mono_font::{
+        ascii::{FONT_10X20, FONT_9X18_BOLD},
+        MonoTextStyle,
+    },
+    prelude::*,
+    primitives::Rectangle,
+};
+use embedded_hal::{
+    delay::DelayNs,
+    digital::{InputPin, OutputPin},
+    spi::SpiDevice,
+};
+use embedded_text::{
+    alignment::{HorizontalAlignment, VerticalAlignment},
+    style::TextBoxStyleBuilder,
+    TextBox,
+};
+use epd_waveshare::{
+    color::Color,
+    epd7in5_v2::{Display7in5, Epd7in5},
+    prelude::*,
+};
+
+use crate::error::Error;
+use crate::model::Quote;
+
+const MARGIN: i32 = 40;
+const CONTENT_WIDTH: u32 = 720;
+const BODY_HEIGHT: u32 = 340;
+const LABEL_HEIGHT: u32 = 30;
+const ATTRIBUTION_Y: i32 = 405;
+const FULL_HEIGHT: u32 = 400;
+
+pub struct Display<SPI, BUSY, DC, RST, DELAY> {
+    epd: Epd7in5<SPI, BUSY, DC, RST, DELAY>,
+    spi: SPI,
+    delay: DELAY,
+    buffer: Display7in5,
+}
+
+impl<SPI, BUSY, DC, RST, DELAY> Display<SPI, BUSY, DC, RST, DELAY>
+where
+    SPI: SpiDevice,
+    BUSY: InputPin,
+    DC: OutputPin,
+    RST: OutputPin,
+    DELAY: DelayNs,
+{
+    pub fn new(
+        mut spi: SPI,
+        busy: BUSY,
+        dc: DC,
+        rst: RST,
+        mut delay: DELAY,
+    ) -> Result<Self, Error<SPI::Error>> {
+        let epd = Epd7in5::new(&mut spi, busy, dc, rst, &mut delay, None).map_err(Error::Spi)?;
+        Ok(Self {
+            epd,
+            spi,
+            delay,
+            buffer: Display7in5::default(),
+        })
+    }
+
+    pub fn show_quote(&mut self, quote: &Quote) -> Result<(), Error<SPI::Error>> {
+        self.buffer.clear(Color::White)?;
+
+        let text_style = MonoTextStyle::new(&FONT_10X20, Color::Black);
+        let centered = TextBoxStyleBuilder::new()
+            .alignment(HorizontalAlignment::Center)
+            .vertical_alignment(VerticalAlignment::Middle)
+            .build();
+
+        TextBox::with_textbox_style(
+            quote.body,
+            Rectangle::new(Point::new(MARGIN, MARGIN), Size::new(CONTENT_WIDTH, BODY_HEIGHT)),
+            text_style,
+            centered,
+        )
+        .draw(&mut self.buffer)?;
+
+        let label_style = MonoTextStyle::new(&FONT_9X18_BOLD, Color::Black);
+        let right_aligned = TextBoxStyleBuilder::new()
+            .alignment(HorizontalAlignment::Right)
+            .vertical_alignment(VerticalAlignment::Middle)
+            .build();
+
+        // e.g. "— Marcus Aurelius in Meditations"
+        let mut attribution = heapless::String::<256>::new();
+        write!(attribution, "\u{2014} {} in {}", quote.author, quote.work).ok();
+
+        TextBox::with_textbox_style(
+            &attribution,
+            Rectangle::new(Point::new(MARGIN, ATTRIBUTION_Y), Size::new(CONTENT_WIDTH, LABEL_HEIGHT)),
+            label_style,
+            right_aligned,
+        )
+        .draw(&mut self.buffer)?;
+
+        self.flush()
+    }
+
+    pub fn show_standby(&mut self) -> Result<(), Error<SPI::Error>> {
+        self.buffer.clear(Color::White)?;
+
+        let style = MonoTextStyle::new(&FONT_10X20, Color::Black);
+        let centered = TextBoxStyleBuilder::new()
+            .alignment(HorizontalAlignment::Center)
+            .vertical_alignment(VerticalAlignment::Middle)
+            .build();
+
+        TextBox::with_textbox_style(
+            "Updating quote bank...",
+            Rectangle::new(Point::new(MARGIN, MARGIN), Size::new(CONTENT_WIDTH, FULL_HEIGHT)),
+            style,
+            centered,
+        )
+        .draw(&mut self.buffer)?;
+
+        self.flush()
+    }
+
+    pub fn show_error<E: core::fmt::Display>(
+        &mut self,
+        error: &E,
+    ) -> Result<(), Error<SPI::Error>> {
+        self.buffer.clear(Color::White)?;
+
+        let mut message = heapless::String::<512>::new();
+        write!(message, "{error}").ok();
+
+        let style = MonoTextStyle::new(&FONT_10X20, Color::Black);
+        let centered = TextBoxStyleBuilder::new()
+            .alignment(HorizontalAlignment::Center)
+            .vertical_alignment(VerticalAlignment::Middle)
+            .build();
+
+        TextBox::with_textbox_style(
+            &message,
+            Rectangle::new(Point::new(MARGIN, MARGIN), Size::new(CONTENT_WIDTH, FULL_HEIGHT)),
+            style,
+            centered,
+        )
+        .draw(&mut self.buffer)?;
+
+        self.flush()
+    }
+
+    fn flush(&mut self) -> Result<(), Error<SPI::Error>> {
+        self.epd
+            .update_frame(&mut self.spi, self.buffer.buffer(), &mut self.delay)
+            .map_err(Error::Spi)?;
+        self.epd
+            .display_frame(&mut self.spi, &mut self.delay)
+            .map_err(Error::Spi)?;
+        self.epd
+            .sleep(&mut self.spi, &mut self.delay)
+            .map_err(Error::Spi)
+    }
+}
