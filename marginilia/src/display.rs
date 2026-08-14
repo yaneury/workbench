@@ -1,3 +1,6 @@
+// Color convention for the Waveshare 7.5" V2 (UC8179) is inverted at the hardware level:
+// Color::White (1-bits) renders as physical black; Color::Black (0-bits) renders as physical white.
+// All color values below are intentionally swapped to compensate.
 use core::fmt::Write;
 
 use embedded_graphics::{
@@ -69,9 +72,9 @@ where
     }
 
     pub fn show_quote(&mut self, quote: &Quote) -> Result<(), Error<SPI::Error>> {
-        self.buffer.clear(Color::White)?;
+        self.buffer.clear(Color::Black)?;
 
-        let text_style = MonoTextStyle::new(&FONT_10X20, Color::Black);
+        let text_style = MonoTextStyle::new(&FONT_10X20, Color::White);
         let centered = TextBoxStyleBuilder::new()
             .alignment(HorizontalAlignment::Center)
             .vertical_alignment(VerticalAlignment::Middle)
@@ -96,7 +99,7 @@ where
         TextBox::with_textbox_style(
             quote.author,
             Rectangle::new(Point::new(MARGIN, AUTHOR_Y), Size::new(CONTENT_WIDTH, AUTHOR_HEIGHT)),
-            MonoTextStyle::new(&FONT_9X18_BOLD, Color::Black),
+            MonoTextStyle::new(&FONT_9X18_BOLD, Color::White),
             right_aligned,
         )
         .draw(&mut self.buffer)?;
@@ -104,7 +107,7 @@ where
         TextBox::with_textbox_style(
             quote.work,
             Rectangle::new(Point::new(MARGIN, WORK_Y), Size::new(CONTENT_WIDTH, WORK_HEIGHT)),
-            MonoTextStyle::new(&FONT_8X13_ITALIC, Color::Black),
+            MonoTextStyle::new(&FONT_8X13_ITALIC, Color::White),
             right_aligned,
         )
         .draw(&mut self.buffer)?;
@@ -113,9 +116,9 @@ where
     }
 
     pub fn show_standby(&mut self) -> Result<(), Error<SPI::Error>> {
-        self.buffer.clear(Color::White)?;
+        self.buffer.clear(Color::Black)?;
 
-        let style = MonoTextStyle::new(&FONT_10X20, Color::Black);
+        let style = MonoTextStyle::new(&FONT_10X20, Color::White);
         let centered = TextBoxStyleBuilder::new()
             .alignment(HorizontalAlignment::Center)
             .vertical_alignment(VerticalAlignment::Middle)
@@ -139,12 +142,12 @@ where
         &mut self,
         error: &E,
     ) -> Result<(), Error<SPI::Error>> {
-        self.buffer.clear(Color::White)?;
+        self.buffer.clear(Color::Black)?;
 
         let mut message = heapless::String::<512>::new();
         write!(message, "{error}").ok();
 
-        let style = MonoTextStyle::new(&FONT_10X20, Color::Black);
+        let style = MonoTextStyle::new(&FONT_10X20, Color::White);
         let centered = TextBoxStyleBuilder::new()
             .alignment(HorizontalAlignment::Center)
             .vertical_alignment(VerticalAlignment::Middle)
